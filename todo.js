@@ -1,18 +1,34 @@
 document.addEventListener('DOMContentLoaded', function() {
-    loadTasks();
-
-    var myNodelist = document.getElementsByTagName("LI");
-    for (let i = 0; i < myNodelist.length; i++) {
-        addCloseButton(myNodelist[i]);
-    }
-
+    updateProgressBar();
+    
     document.querySelector('ul').addEventListener('click', function(ev) {
         if (ev.target.tagName === 'LI') {
             ev.target.classList.toggle('checked');
-            updateTask(ev.target.textContent.slice(0, -1), ev.target.classList.contains('checked'));
+            updateProgressBar();  // Update progress bar after task completion
         }
-    }, false);
+    });
 });
+
+function updateProgressBar() {
+    var tasks = document.querySelectorAll('ul li');  
+    var totalTasks = tasks.length;  // Total number of tasks
+    var completedTasks = 0;
+
+    // Count completed tasks
+    tasks.forEach(function(task) {
+        if (task.classList.contains('checked')) {
+            completedTasks++;
+        }
+    });
+
+    var percentageComplete = (totalTasks === 0) ? 0 : (completedTasks / totalTasks) * 100;
+
+    var progressText = document.getElementById('progressText');
+    progressText.innerHTML = `You have completed ${completedTasks} out of ${totalTasks} tasks (${percentageComplete.toFixed(2)}%)`;
+
+    var progressBar = document.getElementById('progressBar');
+    progressBar.style.width = percentageComplete + '%';  
+}
 
 function newElement() {
     var li = document.createElement("li");
@@ -21,13 +37,13 @@ function newElement() {
         alert("You must enter a task!");
         return;
     }
-    
+
     li.appendChild(document.createTextNode(inputValue));
     document.getElementById("myUL").appendChild(li);
     document.getElementById("myInput").value = "";
 
     addCloseButton(li);
-    saveTask(inputValue, false);
+    updateProgressBar();  //Update the progress bar adding a task
 }
 
 function addCloseButton(li) {
@@ -39,65 +55,7 @@ function addCloseButton(li) {
 
     span.onclick = function() {
         var div = this.parentElement;
-        div.style.display = "none";
-        removeTask(div.textContent.slice(0, -1));
+        div.remove();  
+        updateProgressBar();  // Update the progress bar after deleting a task
     }
-}
-
-function saveTask(task, completed) {
-    var tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    tasks.push({ task: task, completed: completed });
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-    updateTracker();
-}
-
-function loadTasks() {
-    var tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    tasks.forEach(function(item) {
-        if (!item.removed) { 
-            var li = document.createElement("li");
-            li.appendChild(document.createTextNode(item.task));
-            if (item.completed) {
-                li.classList.add('checked');
-            }
-            document.getElementById("myUL").appendChild(li);
-            addCloseButton(li);
-            updateTracker();
-        }
-        updateTracker();
-    });
-}
-
-function updateTask(task, completed) {
-    var tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    tasks.forEach(function(item) {
-        if (item.task === task) {
-            item.completed = completed;
-        }
-    });
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-    updateTracker();
-}
-
-function removeTask(task) {
-    var tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    tasks = tasks.filter(function(item) {
-        return item.task !== task;
-    });
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-    updateTracker();
-}
-
-function updateTracker() {
-    var tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    var activeTasks = tasks.filter(function(item) {
-        return !item.removed;
-    });
-    var completedTasks = activeTasks.filter(function(item) {
-        return item.completed;
-    }).length;
-    var totalTasks = activeTasks.length;
-    
-    localStorage.setItem('completedTasks', completedTasks);
-    localStorage.setItem('totalTasks', totalTasks);
 }
